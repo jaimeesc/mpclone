@@ -108,7 +108,7 @@
       "metadata": {
         "artifactsBaseUrl": ""
       },
-      "defaultValue": "https://gallery.azure.com/artifact/20151001/sonicwall-inc.sonicwall-nsv-firewall-security-vpn-router-previewsnwl-nsv-byol-sltn.1.0.13/Artifacts"
+      "defaultValue": "https://raw.githubusercontent.com/jaimeesc/mpclone/main/"
     },
     "virtualNetworkNewOrExisting": {
       "type": "string",
