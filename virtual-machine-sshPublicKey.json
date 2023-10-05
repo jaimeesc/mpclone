@@ -26,6 +26,9 @@
     "SSHUserName": {
       "type": "string"
     },
+    "SSHPassword": {
+      "type": "securestring"
+    },
     "storageAccount": {
       "type": "string"
     },
