@@ -302,7 +302,7 @@
   ],
   "resources": [
    { 
-        "apiVersion": "2022-09-01",
+        "apiVersion": "2024-11-01",
         "name": "pid-d677907e-d2cd-479b-906d-4bb41404fbb5-partnercenter",
         "type": "Microsoft.Resources/deployments",
         "properties": {
@@ -317,7 +317,7 @@
     {
       "condition": "[equals(parameters('storageAccountNewOrExisting'), 'new')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2022-05-01",
+      "apiVersion": "2024-05-01",
       "name": "[parameters('storageAccount')]",
       "location": "[parameters('location')]",
       "kind": "Storage",
@@ -328,7 +328,7 @@
     {
       "condition": "[equals(parameters('publicIpNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2022-01-01",
+      "apiVersion": "2024-05-01",
       "name": "[parameters('publicIpName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -344,7 +344,7 @@
     {
       "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2022-01-01",
+      "apiVersion": "2024-05-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -374,7 +374,7 @@
       }
     },
     {
-      "apiVersion": "2022-01-01",
+      "apiVersion": "2024-05-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[concat(parameters('vmName'), '-NSG')]",
       "location": "[parameters('location')]",
@@ -528,7 +528,7 @@
       }
     },
     {
-      "apiVersion": "2022-01-01",
+      "apiVersion": "2024-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), '-X0')]",
       "location": "[parameters('location')]",
@@ -554,7 +554,7 @@
       }
     },
     {
-      "apiVersion": "2022-03-01",
+      "apiVersion": "2024-05-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
