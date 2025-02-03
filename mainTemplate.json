@@ -213,8 +213,8 @@
       "type": "string",
       "defaultValue": "Static",
       "allowedValues": [
-        "Dynamic",
-        "Static"
+        "Static",
+        "Dynamic"
       ],
       "metadata": {
         "description": "Allocation method for the public ip address"
@@ -224,8 +224,8 @@
       "type": "string",
       "defaultValue": "Standard",
       "allowedValues": [
-        "Basic",
-        "Standard"
+        "Standard",
+        "Basic"
       ],
       "metadata": {
         "description": "Name of the resource group for the public ip address"
@@ -519,6 +519,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": "[if(not(equals(parameters('publicIpNewOrExisting'), 'none')), variables('publicIpAddressId') , json('null'))]",
+              "publicIPAllocationMethod": "[if(equals(parameters('publicIpNewOrExisting'), 'none'), 'None', 'Static')]",
               "subnet": {
                 "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetWANName'))]"
               }
