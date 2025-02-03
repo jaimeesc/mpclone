@@ -496,7 +496,7 @@
       }
     },
     {
-      "apiVersion": "2022-01-01",
+      "apiVersion": "2024-05-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), '-X1')]",
       "location": "[parameters('location')]",
@@ -519,7 +519,6 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": "[if(not(equals(parameters('publicIpNewOrExisting'), 'none')), variables('publicIpAddressId') , json('null'))]",
-              "publicIPAllocationMethod": "[if(equals(parameters('publicIpNewOrExisting'), 'none'), 'None', 'Static')]",
               "subnet": {
                 "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetWANName'))]"
               }
