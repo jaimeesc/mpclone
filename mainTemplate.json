@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
@@ -49,7 +49,7 @@
     "authenticationType": {
       "type": "string",
       "metadata": {
-        "descritpion": "Type of authentication "
+        "description": "Type of authentication "
       },
       "allowedValues": [
         "sshPublicKey",
@@ -84,7 +84,16 @@
         "description": "Public IP address allowed access SonicWall NSv HTTPS & SSH management "
       }
     },
-    "vmSize": {
+    "imageSku": {
+      "type": "string",
+      "allowedValues": [
+        "snwl-nsv-byol",
+        "snwl-nsv-scx",
+        "snwl-nsv-scx-gen8"
+      ],
+      "defaultValue": "snwl-nsv-scx"
+    },
+    "vmSizeSc": {
       "type": "string",
       "allowedValues": [
         "Standard_D2_v2",
@@ -98,17 +107,55 @@
         "Standard_D2_v4",
         "Standard_DS3_v2"
       ],
-      "metadata": {
-        "description": "Azure VM size for SonicWall-NSv model, select Standard_D2_v2 for NSv 200, select Standard_D3_v2 for NSv 400, select Standard_D4_v2 for NSv 800 and select Standard_D5_v2 for NSv 1600"
-      },
       "defaultValue": "Standard_D3_v2"
     },
-    "baseUrl": {
+    "vmSizeScx": {
       "type": "string",
-      "metadata": {
-        "artifactsBaseUrl": ""
-      },
-      "defaultValue": "https://raw.githubusercontent.com/jaimeesc/mpclone/main/"
+      "allowedValues": [
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_B2ms",
+        "Standard_B4ms",
+        "Standard_D2ds_v4",
+        "Standard_D2s_v4",
+        "Standard_D2_v4",
+        "Standard_D2d_v4",
+        "Standard_D4_v4",
+        "Standard_D4s_v4",
+        "Standard_D4d_v4",
+        "Standard_D4ds_v4",
+        "Standard_D8_v4",
+        "Standard_D8s_v4",
+        "Standard_D8d_v4",
+        "Standard_D8ds_v4"
+      ],
+      "defaultValue": "Standard_DS3_v2"
+    },
+    "vmSizeScxGen8": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_B1ms",
+        "Standard_DC1s_v2",
+        "Standard_DS1_v2",
+        "Standard_DS3_v2",
+        "Standard_F1s",
+        "Standard_DS12-1_v2",
+        "Standard_DC1s_v3",
+        "Standard_DC1ds_v3",
+        "Standard_D2d_v4",
+        "Standard_D2ds_v4",
+        "Standard_D2s_v4",
+        "Standard_D4_v4",
+        "Standard_D4s_v4",
+        "Standard_D4d_v4",
+        "Standard_D4ds_v4",
+        "Standard_D8_v4",
+        "Standard_D8_v3",
+        "Standard_D8s_v3"
+      ],
+      "defaultValue": "Standard_D2d_v4"
     },
     "virtualNetworkNewOrExisting": {
       "type": "string",
@@ -198,7 +245,7 @@
     },
     "publicIpAllocationMethod": {
       "type": "string",
-      "defaultValue": "Dynamic",
+      "defaultValue": "Static",
       "allowedValues": [
         "Dynamic",
         "Static"
@@ -209,7 +256,7 @@
     },
     "publicIpSku": {
       "type": "string",
-      "defaultValue": "Basic",
+      "defaultValue": "Standard",
       "allowedValues": [
         "Basic",
         "Standard"
@@ -220,36 +267,77 @@
     }
   },
   "variables": {
+    "mapAuthTypeToOsProfile": {
+      "sshPublicKey": {
+        "computerName": "[parameters('vmName')]",
+        "adminUserName": "[variables('SSHUserName')]",
+        "linuxConfiguration": {
+          "disablePasswordAuthentication": "true",
+          "ssh": {
+            "publicKeys": [
+              {
+                "path": "[concat('/home/', variables('SSHUserName'), '/.ssh/authorized_keys')]",
+                "keyData": "[parameters('sshKey')]"
+              }
+            ]
+          }
+        }
+      },
+      "password": {
+        "computerName": "[parameters('vmName')]",
+        "adminUserName": "[variables('SSHUserName')]",
+        "adminPassword": "[parameters('SSHPassword')]"
+      }
+    },
+    "trustedLaunchSecurityProfile": {
+      "securityType": "TrustedLaunch",
+      "uefiSettings": {
+        "secureBootEnabled": false,
+        "vTpmEnabled": true
+      }
+    },
     "imagePublisher": "sonicwall-inc",
     "imageOffer": "sonicwall-nsz-azure",
     "imageVersionNumberPrefix": "[if(equals(indexOf(parameters('imageVersion'), '.'), -1), '0.0.', '')]",
     "imageVersionNumber": "[concat(variables('imageVersionNumberPrefix'), parameters('imageVersion'))]",
     "imageVersion": "[if(equals(parameters('imageVersion'), 'latest'), 'latest', variables('imageVersionNumber'))]",
     "nicName": "[concat(parameters('vmName'), '-interface')]",
-    "publicIPAddressType": "Dynamic",
+    "nicX1ResId": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'),'-X1'))]",
+    "nicX0ResId": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'),'-X0'))]",
     "nsgname-mgmt": "[concat(parameters('vmName'), '-NSG')]",
-    "SSHUserName": "management",
+    "nsgResId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgname-mgmt'))]",
+    "SSHUserName": "[concat('manage', 'ment')]",
     "publicIpAddressId": {
       "id": "[resourceId(parameters('publicIpResourceGroupName'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
     },
-    "vmTemplateUrl": "[concat(parameters('baseUrl'), '/virtual-machine-', parameters('authenticationType'),'.json')]",
-    "mapVmSizePlan": {
-      "Standard_D2_v2": "snwl-nsv-byol",
-      "Standard_D3_v2": "snwl-nsv-byol",
-      "Standard_D4_v2": "snwl-nsv-byol",
-      "Standard_D5_v2": "snwl-nsv-byol",
-      "Standard_B2ms": "snwl-nsv-byol-v4",
-      "Standard_B4ms": "snwl-nsv-byol-v4",
-      "Standard_D2ds_v4": "snwl-nsv-byol-v4",
-      "Standard_D2s_v4": "snwl-nsv-byol-v4",
-      "Standard_D2_v4": "snwl-nsv-byol-v4",
-      "Standard_DS3_v2": "snwl-nsv-byol-v4"
-    },
-    "vmPlanId": "[variables('mapVmSizePlan')[parameters('vmSize')]]"
+    "mapSkuToVmSize": {
+      "snwl-nsv-byol": "[parameters('vmSizeSc')]",
+      "snwl-nsv-scx": "[parameters('vmSizeScx')]",
+      "snwl-nsv-scx-gen8": "[parameters('vmSizeScxGen8')]"
+    }
   },
+  "functions": [
+    {
+      "namespace": "sonicwall",
+      "members": {
+        "isLegacySku": {
+          "parameters": [
+            {
+              "name": "sku",
+              "type": "string"
+            }
+          ],
+          "output": {
+            "type": "bool",
+            "value": "[contains(createArray('snwl-nsv-654-beta-r', 'snwl-nsv-beta-i', 'snwl-nsv-beta-p', 'snwl-nsv-beta-q', 'snwl-nsv-byol', 'snwl-nsv-byol-654', 'snwl-nsv-byol-v4'), toLower(parameters('sku')))]"
+          }
+        }
+      }
+    }
+  ],
   "resources": [
-   { 
-        "apiVersion": "2021-01-01",
+   {
+        "apiVersion": "2022-09-01",
         "name": "pid-d677907e-d2cd-479b-906d-4bb41404fbb5-partnercenter",
         "type": "Microsoft.Resources/deployments",
         "properties": {
@@ -264,10 +352,10 @@
     {
       "condition": "[equals(parameters('storageAccountNewOrExisting'), 'new')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2021-01-01",
+      "apiVersion": "2022-05-01",
       "name": "[parameters('storageAccount')]",
       "location": "[parameters('location')]",
-      "kind": "Storage",
+      "kind": "StorageV2",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       }
@@ -275,7 +363,7 @@
     {
       "condition": "[equals(parameters('publicIpNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2021-01-01",
+      "apiVersion": "2022-01-01",
       "name": "[parameters('publicIpName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -291,11 +379,11 @@
     {
       "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2021-01-01",
+      "apiVersion": "2022-01-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgname-mgmt'))]"
+        "[variables('nsgResId')]"
       ],
       "properties": {
         "addressSpace": {
@@ -307,7 +395,7 @@
             "properties": {
               "addressPrefix": "[parameters('subnetWANPrefix')]",
               "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgname-mgmt'))]"
+                "id": "[variables('nsgResId')]"
               }
             }
           },
@@ -321,7 +409,7 @@
       }
     },
     {
-      "apiVersion": "2021-01-01",
+      "apiVersion": "2022-01-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[concat(parameters('vmName'), '-NSG')]",
       "location": "[parameters('location')]",
@@ -443,7 +531,7 @@
       }
     },
     {
-      "apiVersion": "2021-01-01",
+      "apiVersion": "2022-01-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), '-X1')]",
       "location": "[parameters('location')]",
@@ -475,7 +563,7 @@
       }
     },
     {
-      "apiVersion": "2021-01-01",
+      "apiVersion": "2022-01-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), '-X0')]",
       "location": "[parameters('location')]",
@@ -501,59 +589,56 @@
       }
     },
     {
-      "name": "SonicWall-NSv-VM",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2021-01-01",
+      "apiVersion": "2022-03-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[parameters('storageAccount')]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '-X1')]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '-X0')]"
+        "[variables('nicX1ResId')]",
+        "[variables('nicX0ResId')]"
       ],
+      "plan": {
+        "name": "[parameters('imageSku')]",
+        "product": "[variables('imageOffer')]",
+        "publisher": "[variables('imagePublisher')]"
+      },
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('vmTemplateUrl')]",
-          "contentVersion": "1.0.0.0"
+        "hardwareProfile": {
+          "vmSize": "[variables('mapSkuToVmSize')[parameters('imageSku')]]"
         },
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
+        "osProfile": "[variables('mapAuthTypeToOsProfile')[parameters('authenticationType')]]",
+        "securityProfile": "[if(sonicwall.isLegacySku(parameters('imageSku')), json('null'), variables('trustedLaunchSecurityProfile'))]",
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "[variables('imageVersion')]"
           },
-          "vmName": {
-            "value": "[parameters('vmName')]"
-          },
-          "imageSku": {
-            "value": "[variables('vmPlanId')]"
-          },
-          "imageOffer": {
-            "value": "[variables('imageOffer')]"
-          },
-          "imagePublisher": {
-            "value": "[variables('imagePublisher')]"
-          },
-          "nicName": {
-            "value": "[variables('nicName')]"
-          },
-          "vmSize": {
-            "value": "[parameters('vmSize')]"
-          },
-          "SSHUserName": {
-            "value": "[variables('SSHUserName')]"
-          },
-          "SSHPassword": {
-            "value": "[parameters('SSHPassword')]"
-          },
-          "storageAccount": {
-            "value": "[parameters('storageAccount')]"
-          },
-          "storageAccountResourceGroupName": {
-            "value": "[parameters('storageAccountResourceGroupName')]"
-          },
-          "sshKey": {
-            "value": "[parameters('sshKey')]"
-          },
-          "imageVersion": {
-            "value": "[parameters('imageVersion')]"
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+          {
+            "id": "[variables('nicX1ResId')]",
+            "properties": {
+              "primary": true
+            }
+          }, {
+            "id": "[variables('nicX0ResId')]",
+            "properties": {
+              "primary": false
+            }
+          }]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccount')), '2022-05-01').primaryEndpoints.blob]"
           }
         }
       }
