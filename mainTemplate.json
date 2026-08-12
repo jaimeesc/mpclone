@@ -49,7 +49,7 @@
     "authenticationType": {
       "type": "string",
       "metadata": {
-        "descritpion": "Type of authentication "
+        "description": "Type of authentication "
       },
       "allowedValues": [
         "sshPublicKey",
@@ -88,7 +88,8 @@
       "type": "string",
       "allowedValues": [
         "snwl-nsv-byol",
-        "snwl-nsv-scx"
+        "snwl-nsv-scx",
+        "snwl-nsv-scx-gen8"
       ],
       "defaultValue": "snwl-nsv-scx"
     },
@@ -119,9 +120,42 @@
         "Standard_B4ms",
         "Standard_D2ds_v4",
         "Standard_D2s_v4",
-        "Standard_D2_v4"
+        "Standard_D2_v4",
+        "Standard_D2d_v4",
+        "Standard_D4_v4",
+        "Standard_D4s_v4",
+        "Standard_D4d_v4",
+        "Standard_D4ds_v4",
+        "Standard_D8_v4",
+        "Standard_D8s_v4",
+        "Standard_D8d_v4",
+        "Standard_D8ds_v4"
       ],
       "defaultValue": "Standard_DS3_v2"
+    },
+    "vmSizeScxGen8": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_B1ms",
+        "Standard_DC1s_v2",
+        "Standard_DS1_v2",
+        "Standard_DS3_v2",
+        "Standard_F1s",
+        "Standard_DS12-1_v2",
+        "Standard_DC1s_v3",
+        "Standard_DC1ds_v3",
+        "Standard_D2d_v4",
+        "Standard_D2ds_v4",
+        "Standard_D2s_v4",
+        "Standard_D4_v4",
+        "Standard_D4s_v4",
+        "Standard_D4d_v4",
+        "Standard_D4ds_v4",
+        "Standard_D8_v4",
+        "Standard_D8_v3",
+        "Standard_D8s_v3"
+      ],
+      "defaultValue": "Standard_D2d_v4"
     },
     "virtualNetworkNewOrExisting": {
       "type": "string",
@@ -211,7 +245,7 @@
     },
     "publicIpAllocationMethod": {
       "type": "string",
-      "defaultValue": "Dynamic",
+      "defaultValue": "Static",
       "allowedValues": [
         "Dynamic",
         "Static"
@@ -222,7 +256,7 @@
     },
     "publicIpSku": {
       "type": "string",
-      "defaultValue": "Basic",
+      "defaultValue": "Standard",
       "allowedValues": [
         "Basic",
         "Standard"
@@ -278,7 +312,8 @@
     },
     "mapSkuToVmSize": {
       "snwl-nsv-byol": "[parameters('vmSizeSc')]",
-      "snwl-nsv-scx": "[parameters('vmSizeScx')]"
+      "snwl-nsv-scx": "[parameters('vmSizeScx')]",
+      "snwl-nsv-scx-gen8": "[parameters('vmSizeScxGen8')]"
     }
   },
   "functions": [
@@ -301,7 +336,7 @@
     }
   ],
   "resources": [
-   { 
+   {
         "apiVersion": "2022-09-01",
         "name": "pid-d677907e-d2cd-479b-906d-4bb41404fbb5-partnercenter",
         "type": "Microsoft.Resources/deployments",
@@ -320,7 +355,7 @@
       "apiVersion": "2022-05-01",
       "name": "[parameters('storageAccount')]",
       "location": "[parameters('location')]",
-      "kind": "Storage",
+      "kind": "StorageV2",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       }
